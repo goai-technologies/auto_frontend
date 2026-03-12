@@ -1,0 +1,25 @@
+node_modules
+dist
+dist-ssr
+.vite
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+
+# Editor / OS junk
+.DS_Store
+.idea
+.vscode/*
+!.vscode/extensions.json
+*.swp
+
+# Test / coverage output
+coverage
+
+# Env / local config
+.env
+.env.*
