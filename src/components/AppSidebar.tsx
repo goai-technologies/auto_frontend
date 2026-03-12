@@ -1,4 +1,4 @@
-import { useLocation } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { LayoutDashboard, Plug, FolderKanban, Activity, Terminal } from "lucide-react";
 
 import { NavLink } from "@/components/NavLink";
@@ -32,7 +32,7 @@ export function AppSidebar() {
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader className="py-3">
-        <div className="flex items-center gap-2.5">
+        <Link to="/landing" className="flex items-center gap-2.5">
           <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary">
             <Terminal className="h-4 w-4 text-primary-foreground" />
           </div>
@@ -42,7 +42,7 @@ export function AppSidebar() {
               <span className="text-[10px] text-muted-foreground">Control Plane</span>
             </div>
           )}
-        </div>
+        </Link>
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
