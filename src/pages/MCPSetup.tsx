@@ -1,30 +1,38 @@
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { TENANT_ID } from "@/lib/mock-data";
 import { Copy, Check, Terminal } from "lucide-react";
-import { toast } from "sonner";
-
-const mcpConfig = {
-  mcpServers: {
-    [`goai-workflow-${TENANT_ID}`]: {
-      command: "python",
-      args: ["-m", "goai_mcp.server"],
-      cwd: "/not-used-if-you-wrap-with-http",
-      transport: "http",
-      endpoint: `https://mcp.yourdomain.com/${TENANT_ID}`,
-    },
-  },
-};
+import { toast } from "@/hooks/use-toast";
+import { getMe } from "@/lib/api";
 
 const MCPSetup = () => {
   const [copied, setCopied] = useState(false);
+  const { data } = useQuery({
+    queryKey: ["me"],
+    queryFn: getMe,
+  });
+
+  const tenantId = data?.tenant.id ?? "<tenant-id>";
+
+  const mcpConfig = {
+    mcpServers: {
+      [`goai-workflow-${tenantId}`]: {
+        command: "python",
+        args: ["-m", "goai_mcp.server"],
+        cwd: "/not-used-if-you-wrap-with-http",
+        transport: "http",
+        endpoint: `https://mcp.yourdomain.com/${tenantId}`,
+      },
+    },
+  };
+
   const configStr = JSON.stringify(mcpConfig, null, 2);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(configStr);
     setCopied(true);
-    toast.success("Copied to clipboard");
+    toast({ title: "Copied to clipboard" });
     setTimeout(() => setCopied(false), 2000);
   };
 

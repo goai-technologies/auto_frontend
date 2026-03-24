@@ -1,26 +1,56 @@
 import { useState } from "react";
 import { useParams } from "react-router-dom";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { mockProjects, mockAutoPollRules } from "@/lib/mock-data";
 import { getProviderLabel } from "@/lib/format";
 import { Timer, Play, Square } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/hooks/use-toast";
+import { getProject, getAutoPollRules, upsertAutoPollRule, AutoPollRuleRow } from "@/lib/api";
 
 const AutoPolling = () => {
   const { projectId } = useParams<{ projectId: string }>();
-  const project = mockProjects.find((p) => p.project_id === projectId);
-  const existingRule = projectId ? mockAutoPollRules[projectId] : undefined;
+  const { data: project, isLoading } = useQuery({
+    queryKey: ["project", projectId],
+    queryFn: () => getProject(projectId!),
+    enabled: !!projectId,
+  });
 
-  const [active, setActive] = useState(existingRule?.active ?? false);
+  const { data: rules } = useQuery({
+    queryKey: ["autopoll-rules", projectId],
+    queryFn: () => getAutoPollRules(projectId!),
+    enabled: !!projectId,
+  });
+
+  const existingRule: AutoPollRuleRow | undefined = rules && rules.length > 0 ? rules[0] : undefined;
+
+  const [active, setActive] = useState(existingRule?.active === "true");
   const [jql, setJql] = useState(existingRule?.jql ?? "");
-  const [interval, setIntervalVal] = useState(existingRule?.interval_seconds ?? 60);
+  const [interval, setIntervalVal] = useState(Number(existingRule?.interval_seconds ?? 60));
 
-  if (!project) return <div className="text-muted-foreground">Project not found.</div>;
+  const mutation = useMutation({
+    mutationFn: () =>
+      upsertAutoPollRule(projectId!, {
+        provider: project?.issue_provider,
+        ...(project?.issue_provider === "jira"
+          ? { jql }
+          : { linear_states: [], linear_assignee: "" }),
+        interval_seconds: interval,
+        active,
+      }),
+    onSuccess: () => {
+      toast({ title: "Rule saved" });
+    },
+    onError: (err: any) => {
+      toast({ title: "Failed to save rule", description: err?.message });
+    },
+  });
+
+  if (isLoading || !project) return <div className="text-muted-foreground">Project not found.</div>;
 
   return (
     <div className="flex w-full justify-center">
@@ -56,7 +86,7 @@ const AutoPolling = () => {
                 size="sm"
                 onClick={() => {
                   setActive(!active);
-                  toast.success(active ? "Auto-polling stopped" : "Auto-polling started");
+                  toast({ title: active ? "Auto-polling stopped" : "Auto-polling started" });
                 }}
               >
                 {active ? (
@@ -79,7 +109,7 @@ const AutoPolling = () => {
           <CardTitle className="text-base">{existingRule ? "Edit Rule" : "Create Rule"}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {project.issue_source === "jira" ? (
+          {project.issue_provider === "jira" ? (
             <div className="space-y-2">
               <Label>JQL Query</Label>
               <Textarea
@@ -122,8 +152,8 @@ const AutoPolling = () => {
               <Switch checked={active} onCheckedChange={setActive} />
               <span className="text-sm text-foreground">Active</span>
             </div>
-            <Button className="w-40" onClick={() => toast.success("Rule saved")}>
-              {existingRule ? "Update Rule" : "Create Rule"}
+            <Button className="w-40" onClick={() => mutation.mutate()} disabled={mutation.isPending}>
+              {mutation.isPending ? "Saving…" : existingRule ? "Update Rule" : "Create Rule"}
             </Button>
           </div>
         </CardContent>

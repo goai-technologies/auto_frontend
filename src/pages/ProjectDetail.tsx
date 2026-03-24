@@ -1,18 +1,35 @@
 import { useParams, Link } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/StatusBadge";
-import { mockProjects, mockRuns } from "@/lib/mock-data";
 import { formatDateTime, getProviderLabel } from "@/lib/format";
 import { Play, Timer, ExternalLink, GitBranch, Ticket } from "lucide-react";
+import { getProject, listRuns } from "@/lib/api";
 
 const ProjectDetail = () => {
   const { projectId } = useParams<{ projectId: string }>();
-  const project = mockProjects.find((p) => p.project_id === projectId);
-  const projectRuns = mockRuns.filter((r) => r.project_id === projectId);
 
-  if (!project) {
-    return <div className="text-muted-foreground">Project not found.</div>;
+  const {
+    data: project,
+    isLoading: loadingProject,
+  } = useQuery({
+    queryKey: ["project", projectId],
+    queryFn: () => getProject(projectId!),
+    enabled: !!projectId,
+  });
+
+  const {
+    data: projectRuns,
+    isLoading: loadingRuns,
+  } = useQuery({
+    queryKey: ["runs", { projectId }],
+    queryFn: () => listRuns({ project_id: projectId }),
+    enabled: !!projectId,
+  });
+
+  if (loadingProject || !project) {
+    return <div className="text-sm text-muted-foreground">Loading project…</div>;
   }
 
   return (
@@ -59,9 +76,9 @@ const ProjectDetail = () => {
             <div className="flex items-center gap-2">
               <Ticket className="h-4 w-4 text-primary" />
               <span className="text-sm text-foreground">
-                {getProviderLabel(project.issue_source)}
+                {getProviderLabel(project.issue_provider)}
               </span>
-              <span className="font-mono text-xs text-muted-foreground">({project.issue_source_key})</span>
+              <span className="font-mono text-xs text-muted-foreground">({project.issue_project_key_or_team})</span>
             </div>
             <p className="text-xs text-muted-foreground mt-1">
               Workflow: {project.default_workflow}
@@ -75,7 +92,7 @@ const ProjectDetail = () => {
           <CardTitle className="text-base">Recent Runs</CardTitle>
         </CardHeader>
         <CardContent>
-          {projectRuns.length === 0 ? (
+          {!projectRuns || projectRuns.length === 0 ? (
             <p className="text-sm text-muted-foreground">No runs yet.</p>
           ) : (
             <table className="w-full text-sm">
@@ -89,18 +106,18 @@ const ProjectDetail = () => {
                 </tr>
               </thead>
               <tbody>
-                {projectRuns.map((run) => (
+                {projectRuns!.map((run) => (
                   <tr key={run.run_id} className="border-b last:border-0">
                     <td className="py-2.5">
                       <Link
-                        to={`/runs/${run.run_id}`}
+                        to={`/runs/${encodeURIComponent(run.run_id)}`}
                         className="font-mono text-xs text-primary hover:underline"
                       >
-                        {run.issue_key}
+                        {run.issue_key_or_id}
                       </Link>
                     </td>
                     <td className="py-2.5">
-                      <StatusBadge status={run.status} />
+                      <StatusBadge status={run.status as any} />
                     </td>
                     <td className="py-2.5">
                       {run.pr_url ? (
@@ -117,9 +134,9 @@ const ProjectDetail = () => {
                       )}
                     </td>
                     <td className="py-2.5 text-xs text-muted-foreground">
-                      {formatDateTime(run.started_at)}
+                      {formatDateTime(run.created_at)}
                     </td>
-                    <td className="py-2.5 text-xs text-muted-foreground">{run.initiated_by}</td>
+                    <td className="py-2.5 text-xs text-muted-foreground">{run.initiated_by_id}</td>
                   </tr>
                 ))}
               </tbody>

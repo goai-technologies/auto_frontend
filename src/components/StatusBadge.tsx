@@ -1,9 +1,17 @@
 import { cn } from "@/lib/utils";
-import { RunStatus } from "@/lib/mock-data";
 import { getStatusColor } from "@/lib/format";
 
+type Status =
+  | "queued"
+  | "running"
+  | "success"
+  | "failed"
+  | "cancelled"
+  | "succeeded"
+  | "skipped";
+
 interface StatusBadgeProps {
-  status: RunStatus;
+  status: Status;
   className?: string;
 }
 
@@ -18,6 +26,7 @@ export function StatusBadge({ status, className }: StatusBadgeProps) {
     >
       {status === "running" && <span className="h-1.5 w-1.5 rounded-full bg-current animate-pulse-soft" />}
       {status === "success" && <span className="h-1.5 w-1.5 rounded-full bg-current" />}
+      {status === "succeeded" && <span className="h-1.5 w-1.5 rounded-full bg-current" />}
       {status === "failed" && <span className="h-1.5 w-1.5 rounded-full bg-current" />}
       {status}
     </span>

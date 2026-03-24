@@ -6,15 +6,29 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Terminal } from "lucide-react";
+import { login } from "@/lib/api";
+import { toast } from "@/hooks/use-toast";
 
 export default function Login() {
   const navigate = useNavigate();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState("parth@goai.solutions");
+  const [password, setPassword] = useState("123123123");
+  const [loading, setLoading] = useState(false);
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    navigate("/");
+    setLoading(true);
+    login(email, password)
+      .then(() => {
+        navigate("/");
+      })
+      .catch((err: any) => {
+        toast({
+          title: "Login failed",
+          description: err?.message ?? "Please check your credentials and try again.",
+        });
+      })
+      .finally(() => setLoading(false));
   };
 
   const handleGoogleLogin = () => {
@@ -99,8 +113,8 @@ export default function Login() {
                   required
                 />
               </div>
-              <Button type="submit" className="w-full">
-                Sign In
+              <Button type="submit" className="w-full" disabled={loading}>
+                {loading ? "Signing in..." : "Sign In"}
               </Button>
             </form>
 

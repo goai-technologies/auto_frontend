@@ -1,21 +1,32 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { StatusBadge } from "@/components/StatusBadge";
-import { mockRuns, mockProjects, RunStatus } from "@/lib/mock-data";
 import { formatDateTime } from "@/lib/format";
 import { ExternalLink } from "lucide-react";
+import { listProjects, listRuns, RunRow } from "@/lib/api";
 
 const ActivityPage = () => {
   const [projectFilter, setProjectFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
 
-  const filtered = mockRuns.filter((run) => {
-    if (projectFilter !== "all" && run.project_id !== projectFilter) return false;
-    if (statusFilter !== "all" && run.status !== statusFilter) return false;
-    return true;
+  const { data: projects } = useQuery({
+    queryKey: ["projects"],
+    queryFn: listProjects,
   });
+
+  const { data: runs } = useQuery({
+    queryKey: ["runs", { projectFilter, statusFilter }],
+    queryFn: () =>
+      listRuns({
+        project_id: projectFilter !== "all" ? projectFilter : undefined,
+        status: statusFilter !== "all" ? statusFilter : undefined,
+      }),
+  });
+
+  const filtered: RunRow[] = runs ?? [];
 
   return (
     <div className="flex w-full flex-col gap-6">
@@ -31,7 +42,7 @@ const ActivityPage = () => {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All projects</SelectItem>
-            {mockProjects.map((p) => (
+            {projects?.map((p) => (
               <SelectItem key={p.project_id} value={p.project_id}>
                 {p.name}
               </SelectItem>
@@ -44,7 +55,7 @@ const ActivityPage = () => {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All statuses</SelectItem>
-            {(["queued", "running", "success", "failed", "cancelled"] as RunStatus[]).map((s) => (
+            {["queued", "running", "succeeded", "failed", "skipped"].map((s) => (
               <SelectItem key={s} value={s} className="capitalize">
                 {s}
               </SelectItem>
@@ -74,17 +85,17 @@ const ActivityPage = () => {
                   <tr key={run.run_id} className="border-b last:border-0 hover:bg-muted/30 transition-colors">
                     <td className="p-3">
                       <Link
-                        to={`/runs/${run.run_id}`}
+                        to={`/runs/${encodeURIComponent(run.run_id)}`}
                         className="font-mono text-xs text-primary hover:underline"
                       >
                         {run.run_id}
                       </Link>
                     </td>
                     <td className="p-3 text-foreground">{run.project_id}</td>
-                    <td className="p-3 font-mono text-xs text-foreground">{run.issue_key}</td>
+                    <td className="p-3 font-mono text-xs text-foreground">{run.issue_key_or_id}</td>
                     <td className="p-3 font-mono text-xs text-muted-foreground">{run.workflow}</td>
                     <td className="p-3">
-                      <StatusBadge status={run.status} />
+                      <StatusBadge status={run.status as any} />
                     </td>
                     <td className="p-3">
                       {run.pr_url ? (
@@ -100,8 +111,8 @@ const ActivityPage = () => {
                         <span className="text-xs text-muted-foreground">—</span>
                       )}
                     </td>
-                    <td className="p3 text-xs text-muted-foreground">{formatDateTime(run.started_at)}</td>
-                    <td className="p-3 text-xs text-muted-foreground">{run.initiated_by}</td>
+                    <td className="p3 text-xs text-muted-foreground">{formatDateTime(run.created_at)}</td>
+                    <td className="p-3 text-xs text-muted-foreground">{run.initiated_by_id}</td>
                   </tr>
                 ))}
                 {filtered.length === 0 && (
