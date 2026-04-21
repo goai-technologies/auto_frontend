@@ -6,29 +6,40 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Terminal } from "lucide-react";
-import { login } from "@/lib/api";
+import { useLogin } from "@/hooks/api/useAuth";
 import { toast } from "@/hooks/use-toast";
+import { ApiError } from "@/lib/api/client";
 
 export default function Login() {
   const navigate = useNavigate();
   const [email, setEmail] = useState("parth@goai.solutions");
   const [password, setPassword] = useState("123123123");
-  const [loading, setLoading] = useState(false);
+  const loginMutation = useLogin();
+
+  const fillParthCreds = () => {
+    setEmail("parth@goai.solutions");
+    setPassword("123123123");
+  };
+
+  const fillOperatorCreds = () => {
+    setEmail("operator@goai.solutions");
+    setPassword("123123123");
+  };
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-    login(email, password)
-      .then(() => {
-        navigate("/");
-      })
-      .catch((err: any) => {
+    loginMutation
+      .mutateAsync({ email, password })
+      .then(() => navigate("/"))
+      .catch((err: any) =>
         toast({
           title: "Login failed",
-          description: err?.message ?? "Please check your credentials and try again.",
-        });
-      })
-      .finally(() => setLoading(false));
+          description:
+            err instanceof ApiError && err.status === 401
+              ? "Account inactive or unauthorized. Contact your administrator."
+              : err?.message ?? "Please check your credentials and try again.",
+        }),
+      );
   };
 
   const handleGoogleLogin = () => {
@@ -85,6 +96,15 @@ export default function Login() {
               <Separator className="flex-1" />
             </div>
 
+            <div className="mb-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
+              <Button type="button" variant="outline" onClick={fillParthCreds}>
+                Use Parth account
+              </Button>
+              <Button type="button" variant="outline" onClick={fillOperatorCreds}>
+                Use Operator account
+              </Button>
+            </div>
+
             <form onSubmit={handleLogin} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
@@ -113,8 +133,8 @@ export default function Login() {
                   required
                 />
               </div>
-              <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? "Signing in..." : "Sign In"}
+              <Button type="submit" className="w-full" disabled={loginMutation.isPending}>
+                {loginMutation.isPending ? "Signing in..." : "Sign In"}
               </Button>
             </form>
 

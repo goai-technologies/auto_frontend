@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/StatusBadge";
 import { formatDateTime, getProviderLabel } from "@/lib/format";
 import { Play, Timer, ExternalLink, GitBranch, Ticket } from "lucide-react";
-import { getProject, listRuns } from "@/lib/api";
+import { getProject } from "@/lib/api/projects";
+import { listRuns } from "@/lib/api/runs";
 
 const ProjectDetail = () => {
   const { projectId } = useParams<{ projectId: string }>();
@@ -21,10 +22,9 @@ const ProjectDetail = () => {
 
   const {
     data: projectRuns,
-    isLoading: loadingRuns,
   } = useQuery({
     queryKey: ["runs", { projectId }],
-    queryFn: () => listRuns({ project_id: projectId }),
+    queryFn: () => listRuns({ project_id: projectId, page: 1, page_size: 10 }),
     enabled: !!projectId,
   });
 
@@ -37,7 +37,7 @@ const ProjectDetail = () => {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground">{project.name}</h1>
-          <p className="mt-1 font-mono text-sm text-muted-foreground">{project.project_id}</p>
+          <p className="mt-1 font-mono text-sm text-muted-foreground">{project.id}</p>
         </div>
         <div className="flex gap-2">
           <Link to={`/projects/${projectId}/run`}>
@@ -65,7 +65,7 @@ const ProjectDetail = () => {
                 {project.repo_owner}/{project.repo_name}
               </span>
             </div>
-            <p className="text-xs text-muted-foreground mt-1">Branch: {project.default_branch}</p>
+            <p className="text-xs text-muted-foreground mt-1">Branch: {project.repo_default_branch}</p>
           </CardContent>
         </Card>
         <Card className="bg-card/80 backdrop-blur-sm border-border/60 shadow-sm">
@@ -76,12 +76,12 @@ const ProjectDetail = () => {
             <div className="flex items-center gap-2">
               <Ticket className="h-4 w-4 text-primary" />
               <span className="text-sm text-foreground">
-                {getProviderLabel(project.issue_provider)}
+                {getProviderLabel(project.ticket_source_type)}
               </span>
-              <span className="font-mono text-xs text-muted-foreground">({project.issue_project_key_or_team})</span>
+              <span className="font-mono text-xs text-muted-foreground">({project.ticket_source_project_key})</span>
             </div>
             <p className="text-xs text-muted-foreground mt-1">
-              Workflow: {project.default_workflow}
+              Workflow: {project.workflow_type}
             </p>
           </CardContent>
         </Card>
@@ -92,12 +92,12 @@ const ProjectDetail = () => {
           <CardTitle className="text-base">Recent Runs</CardTitle>
         </CardHeader>
         <CardContent>
-          {!projectRuns || projectRuns.length === 0 ? (
+          {!projectRuns || projectRuns.items.length === 0 ? (
             <p className="text-sm text-muted-foreground">No runs yet.</p>
           ) : (
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b text-muted-foreground">
+                <tr className="border-b border-border/40 text-muted-foreground">
                   <th className="text-left pb-2 font-medium">Issue</th>
                   <th className="text-left pb-2 font-medium">Status</th>
                   <th className="text-left pb-2 font-medium">PR</th>
@@ -106,14 +106,14 @@ const ProjectDetail = () => {
                 </tr>
               </thead>
               <tbody>
-                {projectRuns!.map((run) => (
-                  <tr key={run.run_id} className="border-b last:border-0">
+                {projectRuns.items.map((run) => (
+                  <tr key={run.id} className="border-b border-border/30 last:border-0">
                     <td className="py-2.5">
                       <Link
-                        to={`/runs/${encodeURIComponent(run.run_id)}`}
+                        to={`/runs/${encodeURIComponent(run.id)}`}
                         className="font-mono text-xs text-primary hover:underline"
                       >
-                        {run.issue_key_or_id}
+                        {run.original_ticket_key}
                       </Link>
                     </td>
                     <td className="py-2.5">
@@ -136,7 +136,7 @@ const ProjectDetail = () => {
                     <td className="py-2.5 text-xs text-muted-foreground">
                       {formatDateTime(run.created_at)}
                     </td>
-                    <td className="py-2.5 text-xs text-muted-foreground">{run.initiated_by_id}</td>
+                    <td className="py-2.5 text-xs text-muted-foreground">{run.created_by_user_id}</td>
                   </tr>
                 ))}
               </tbody>

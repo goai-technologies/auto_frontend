@@ -5,18 +5,12 @@ import { AppSidebar } from "@/components/AppSidebar";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/components/ThemeProvider";
 import { Moon, Sun, LogOut } from "lucide-react";
-import { getAuthToken, setAuthToken } from "@/lib/api";
+import { useAuth } from "@/components/AuthProvider";
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const { theme, toggleTheme } = useTheme();
+  const { logout } = useAuth();
   const navigate = useNavigate();
-
-  React.useEffect(() => {
-    const token = getAuthToken();
-    if (!token) {
-      navigate("/landing", { replace: true });
-    }
-  }, [navigate]);
 
   return (
     <SidebarProvider>
@@ -30,7 +24,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                 size="icon"
                 className="h-8 w-8"
                 onClick={() => {
-                  setAuthToken(null);
+                  logout();
                   navigate("/landing", { replace: true });
                 }}
                 aria-label="Log out"

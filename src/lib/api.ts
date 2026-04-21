@@ -157,7 +157,7 @@ export async function getMe(): Promise<{ user: AuthUser; tenant: AuthTenant }> {
 
 // -------- Dashboard --------
 
-export type RunStatusApi = "queued" | "running" | "succeeded" | "failed" | "skipped";
+export type RunStatusApi = "queued" | "running" | "succeeded" | "failed" | "skipped" | "rejected";
 
 export interface DashboardRun {
   run_id: string;
@@ -170,6 +170,12 @@ export interface DashboardRun {
   repo_name: string;
   branch: string;
   status: RunStatusApi;
+  confidence_score?: number | null;
+  confidence_decision?: "approved" | "rejected" | null;
+  original_ticket_key?: string;
+  original_ticket_url?: string;
+  shadow_ticket_key?: string;
+  shadow_ticket_url?: string;
   pr_url?: string;
   created_at: string;
   updated_at?: string;
@@ -290,6 +296,13 @@ export interface RunRow {
   repo_name: string;
   branch: string;
   status: RunStatusApi;
+  confidence_score?: number | null;
+  confidence_decision?: "approved" | "rejected" | null;
+  original_ticket_key?: string;
+  original_ticket_url?: string;
+  shadow_ticket_key?: string;
+  shadow_ticket_url?: string;
+  parent_run_id?: string;
   pr_url?: string;
   created_at: string;
   updated_at?: string;
@@ -324,13 +337,43 @@ export function listRunEvents(runId: string) {
   return request<RunEventRow[]>(`/runs/${encodeURIComponent(runId)}/events`);
 }
 
-export function startRun(projectId: string, body: { ticket_url?: string; issue_key?: string; initiated_by_id: string }) {
+export function startRun(projectId: string, body: {
+  ticket_url?: string;
+  issue_key?: string;
+  initiated_by_type?: string;
+  initiated_by_id?: string;
+  confidence_score?: number;
+}) {
   return request<{ run_id: string; status: RunStatusApi }>(`/projects/${encodeURIComponent(projectId)}/runs`, {
     method: "POST",
     body: JSON.stringify({
       initiated_by_type: "ui",
       ...body,
     }),
+  });
+}
+
+export interface RerunResponse {
+  run_id: string;
+  parent_run_id: string;
+  status: RunStatusApi;
+}
+
+export function rerunRun(runId: string) {
+  return request<RerunResponse>(`/runs/${encodeURIComponent(runId)}/rerun`, {
+    method: "POST",
+  });
+}
+
+export interface StepRerunResponse {
+  step_id: string;
+  attempt_no: number;
+  status: RunStatusApi;
+}
+
+export function rerunStep(runId: string, stepId: string) {
+  return request<StepRerunResponse>(`/runs/${encodeURIComponent(runId)}/steps/${encodeURIComponent(stepId)}/rerun`, {
+    method: "POST",
   });
 }
 

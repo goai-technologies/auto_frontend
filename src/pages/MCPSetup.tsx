@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Copy, Check, Terminal } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-import { getMe } from "@/lib/api";
+import { getMe } from "@/lib/api/auth";
 
 const MCPSetup = () => {
   const [copied, setCopied] = useState(false);

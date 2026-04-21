@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { LayoutDashboard, Plug, FolderKanban, Activity, Terminal } from "lucide-react";
+import { LayoutDashboard, Plug, FolderKanban, Activity, Terminal, Users } from "lucide-react";
 
 import { NavLink } from "@/components/NavLink";
 import {
@@ -13,16 +13,22 @@ import {
   SidebarHeader,
   SidebarFooter,
 } from "@/components/ui/sidebar";
+import { useAuth } from "@/components/AuthProvider";
+import type { Role } from "@/lib/api/types";
 
-const mainNav = [
-  { title: "Dashboard", url: "/", icon: LayoutDashboard },
-  { title: "Integrations", url: "/integrations", icon: Plug },
-  { title: "Projects", url: "/projects", icon: FolderKanban },
-  { title: "Activity", url: "/activity", icon: Activity },
-  { title: "MCP Setup", url: "/mcp", icon: Terminal },
+const mainNav: Array<{ title: string; url: string; icon: any; roles: Role[] }> = [
+  { title: "Dashboard", url: "/", icon: LayoutDashboard, roles: ["admin", "operator"] },
+  { title: "Integrations", url: "/integrations", icon: Plug, roles: ["admin"] },
+  { title: "Users", url: "/users", icon: Users, roles: ["admin"] },
+  { title: "Projects", url: "/projects", icon: FolderKanban, roles: ["admin", "operator"] },
+  { title: "Activity", url: "/activity", icon: Activity, roles: ["admin", "operator"] },
+  { title: "MCP Setup", url: "/mcp", icon: Terminal, roles: ["admin", "operator"] },
 ];
 
 export function AppSidebar() {
+  const { role, tenantId, userId } = useAuth();
+  const visibleNav = mainNav.filter((item) => (role ? item.roles.includes(role) : true));
+
   return (
     <Sidebar collapsible="none">
       <SidebarHeader className="py-3">
@@ -41,7 +47,7 @@ export function AppSidebar() {
           <SidebarGroupLabel>Navigation</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {mainNav.map((item) => (
+              {visibleNav.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <NavLink
                     to={item.url}
@@ -64,8 +70,8 @@ export function AppSidebar() {
             <span className="text-[10px] font-bold text-primary">A</span>
           </div>
           <div className="flex flex-col">
-            <span className="text-xs font-medium text-foreground">ABC Corp</span>
-            <span className="text-[10px] text-muted-foreground">admin@abc.com</span>
+            <span className="text-xs font-medium text-foreground">{tenantId ?? "Tenant"}</span>
+            <span className="text-[10px] text-muted-foreground">{userId ?? role ?? "user"}</span>
           </div>
         </div>
       </SidebarFooter>

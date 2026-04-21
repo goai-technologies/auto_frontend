@@ -13,6 +13,11 @@ import {
   BarChart3,
   Terminal,
   CheckCircle2,
+  Layers,
+  Lock,
+  Gauge,
+  RefreshCw,
+  Workflow,
   Moon,
   Sun,
 } from "lucide-react";
@@ -29,40 +34,97 @@ const fadeUp = {
 const features = [
   {
     icon: GitPullRequest,
-    title: "Ticket → PR in Minutes",
+    title: "Ticket To PR With Confidence Guard",
     description:
-      "Paste a Jira or Linear ticket and get a production-ready pull request with implementation, tests, and QA checks in under 5 minutes.",
+      "Runs evaluate confidence and route low-confidence work to manual review, with explicit accepted, needs review, and rejected states.",
   },
   {
     icon: Zap,
-    title: "Auto-Polling Workflows",
+    title: "Concurrency-Safe Orchestration",
     description:
-      "Configure JQL or Linear filters and let GoAI continuously pick up new tickets, keep state, and generate fresh PRs as the queue moves.",
+      "Per-project and repository locks prevent duplicate active executions, keeping workflow runs deterministic and conflict-free.",
   },
   {
-    icon: Bot,
-    title: "Cursor MCP Integration",
+    icon: RefreshCw,
+    title: "Run and Step Reruns",
     description:
-      "Use GoAI directly from Cursor. Ask in natural language, run workflows, and inspect logs without leaving your IDE.",
+      "Operators can rerun full workflows or specific failed steps without restarting everything, preserving context and accelerating recovery.",
   },
   {
     icon: Plug,
-    title: "Connect Your Stack",
+    title: "Integration Health and Secrets Safety",
     description:
-      "Integrate GitHub, Jira, and Linear with scoped tokens or installations. No custom scripts or webhooks required to start.",
+      "Connected providers expose health and error state while credentials stay encrypted at rest and never return in plaintext.",
   },
   {
-    icon: Shield,
-    title: "Multi-Tenant & Secure",
+    icon: Workflow,
+    title: "Webhook and Auto-Trigger Ready",
     description:
-      "Each organization has isolated data, per-tenant credentials, and role-based access so GoAI can be safely adopted across teams.",
+      "Subscriptions and delivery logging support event-driven automation with clear visibility into trigger status and retry behavior.",
   },
   {
     icon: BarChart3,
-    title: "Full Run Visibility",
+    title: "Operational List Views",
     description:
-      "See every step in the workflow—from PRD Lite to repo navigation, planning, implementation, and QA—with timestamps and structured logs.",
+      "Runs, projects, integrations, and users support filtering, search, sorting, and pagination for production-scale control.",
   },
+];
+
+const whatsNewItems = [
+  {
+    icon: Layers,
+    title: "Postgres Persistence",
+    description: "v1 workflows are backed by migrated SQL models for durable, queryable run history.",
+  },
+  {
+    icon: Gauge,
+    title: "Confidence Decision Engine",
+    description: "Each run captures confidence score and decision to enable deterministic manual-review routing.",
+  },
+  {
+    icon: GitPullRequest,
+    title: "Jira Shadow Ticket Flow",
+    description: "Execution can operate against shadow tickets while preserving the original issue link.",
+  },
+  {
+    icon: RefreshCw,
+    title: "Rerun Controls",
+    description: "Rerun full runs or targeted steps using dedicated APIs designed for operations recovery.",
+  },
+  {
+    icon: BarChart3,
+    title: "Dashboard and Artifacts APIs",
+    description: "Summary metrics, events, artifact list/detail, and activity feeds are now first-class endpoints.",
+  },
+  {
+    icon: Shield,
+    title: "Role-Protected Admin Surfaces",
+    description: "Admin and operator roles enforce API-level permissions for integrations, users, and system controls.",
+  },
+  {
+    icon: Plug,
+    title: "Webhook and Delivery Logging",
+    description: "Event subscriptions and delivery tracking support reliable trigger automation across ticket sources.",
+  },
+  {
+    icon: Bot,
+    title: "Onboarding and Health Readiness",
+    description: "Backend-driven onboarding status and richer health/readiness signals improve rollout confidence.",
+  },
+];
+
+const securityHighlights = [
+  "Integration and workflow secrets are encrypted at rest.",
+  "Role-protected actions are enforced for admin and operator scopes.",
+  "Sensitive credential values are never returned to the UI in plaintext.",
+];
+
+const postLoginPanels = [
+  "KPI cards for projects, runs, success rate, and integration health.",
+  "Recent runs with confidence decisions and original/shadow ticket links.",
+  "Onboarding progress with missing steps and first-run readiness state.",
+  "Integrations health status with last-error visibility.",
+  "System status indicators for readiness and operational dependencies.",
 ];
 
 const steps = [
@@ -105,6 +167,9 @@ export default function Landing() {
           <div className="hidden items-center gap-8 md:flex">
             <a href="#features" className="text-sm text-muted-foreground transition-colors hover:text-foreground">
               Features
+            </a>
+            <a href="#whats-new" className="text-sm text-muted-foreground transition-colors hover:text-foreground">
+              What&apos;s New
             </a>
             <a href="#how-it-works" className="text-sm text-muted-foreground transition-colors hover:text-foreground">
               How It Works
@@ -166,8 +231,8 @@ export default function Landing() {
             custom={2}
           >
             GoAI turns Jira or Linear tickets into reviewed pull requests in under{" "}
-            <span className="font-semibold text-foreground">5 minutes</span> — including PRD, plan, implementation,
-            and QA checks.
+            <span className="font-semibold text-foreground">5 minutes</span> with confidence decisions, shadow ticket
+            execution, and rerun controls built for production operations.
           </motion.p>
           <motion.div
             className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row"
@@ -206,7 +271,10 @@ export default function Landing() {
                   <span className="text-info">PAY-142</span>
                 </p>
                 <p className="text-muted-foreground">
-                  <span className="text-success">✓</span> [09:15:15] PRD Lite generated
+                  <span className="text-success">✓</span> [09:15:10] Confidence accepted (0.91)
+                </p>
+                <p className="text-muted-foreground">
+                  <span className="text-success">✓</span> [09:15:20] Shadow ticket created: PAY-5001
                 </p>
                 <p className="text-muted-foreground">
                   <span className="text-success">✓</span> [09:15:45] Repo navigation complete — 12 files mapped
@@ -221,7 +289,7 @@ export default function Landing() {
                   <span className="text-success">✓</span> [09:17:50] QA checks passed
                 </p>
                 <p className="text-foreground font-medium">
-                  <span className="text-primary">✓</span> [09:18:30] PR created →{" "}
+                  <span className="text-primary">✓</span> [09:18:30] PR created (rerun-ready) →{" "}
                   <span className="text-primary underline">github.com/acme/payments/pull/87</span>
                 </p>
                 <p className="pt-2 text-xs text-muted-foreground">
@@ -237,11 +305,11 @@ export default function Landing() {
         <div className="container mx-auto px-4">
           <div className="text-center">
             <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
-              Ship production PRs in minutes, not days
+              Built for production workflow operations
             </h2>
             <p className="mx-auto mt-4 max-w-2xl text-muted-foreground">
-              From one-off ticket runs to fully automated pipelines — GoAI handles PRD, planning, implementation, and
-              QA so your team can focus on reviews instead of boilerplate.
+              From confidence-gated execution to role-protected administration, GoAI v1 turns ticket automation into a
+              reliable control plane for engineering teams.
             </p>
           </div>
           <div className="mt-16 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -265,6 +333,70 @@ export default function Landing() {
                 </Card>
               </motion.div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      <section id="whats-new" className="border-t border-border py-24">
+        <div className="container mx-auto px-4">
+          <div className="text-center">
+            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">What&apos;s New in v1</h2>
+            <p className="mx-auto mt-4 max-w-2xl text-muted-foreground">
+              Major platform upgrades across persistence, orchestration, security, and operational visibility.
+            </p>
+          </div>
+          <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {whatsNewItems.map((item, i) => (
+              <motion.div
+                key={item.title}
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: true, margin: "-50px" }}
+                variants={fadeUp}
+                custom={i}
+              >
+                <Card className="h-full border-border bg-card">
+                  <CardContent className="p-5">
+                    <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10">
+                      <item.icon className="h-4 w-4 text-primary" />
+                    </div>
+                    <h3 className="mb-1 text-sm font-semibold">{item.title}</h3>
+                    <p className="text-xs leading-relaxed text-muted-foreground">{item.description}</p>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            ))}
+          </div>
+
+          <div className="mt-10 rounded-xl border border-primary/20 bg-primary/5 p-6">
+            <div className="flex items-start gap-3">
+              <Lock className="mt-0.5 h-5 w-5 text-primary" />
+              <div>
+                <h3 className="text-sm font-semibold text-foreground">Security and trust by default</h3>
+                <ul className="mt-2 space-y-1 text-xs text-muted-foreground">
+                  {securityHighlights.map((item) => (
+                    <li key={item} className="flex items-start gap-2">
+                      <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 text-primary" />
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-10">
+            <h3 className="text-lg font-semibold text-foreground">Post-login control plane highlights</h3>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Teams land on an operational dashboard designed for execution clarity and fast intervention.
+            </p>
+            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              {postLoginPanels.map((item) => (
+                <div key={item} className="rounded-lg border border-border bg-card/60 p-3 text-sm text-muted-foreground">
+                  {item}
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </section>
@@ -332,33 +464,33 @@ export default function Landing() {
       <section id="pricing" className="border-t border-border bg-muted/30 py-24">
         <div className="container mx-auto px-4 text-center">
           <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
-            Pricing that scales with your team
+            Simple, per-seat pricing
           </h2>
           <p className="mx-auto mt-4 max-w-xl text-muted-foreground">
-            Start with a pilot, then roll out across squads. You only pay for real workflows that ship value.
+            Choose a plan that matches your operational needs. Upgrade any time.
           </p>
           <div className="mt-10 grid gap-6 text-left sm:grid-cols-3">
             <Card className="border-border bg-card">
               <CardContent className="p-6">
                 <p className="text-xs font-semibold uppercase text-primary">Starter</p>
-                <p className="mt-2 text-3xl font-bold text-foreground">$0</p>
-                <p className="mt-1 text-xs text-muted-foreground">for internal pilots</p>
+                <p className="mt-2 text-3xl font-bold text-foreground">$50</p>
+                <p className="mt-1 text-xs text-muted-foreground">per seat / month</p>
                 <ul className="mt-4 space-y-1 text-xs text-muted-foreground">
-                  <li>• Up to 3 projects</li>
-                  <li>• 50 workflow runs / month</li>
-                  <li>• Email support</li>
+                  <li>• Core ticket → PR runs</li>
+                  <li>• Confidence gating + reruns</li>
+                  <li>• Standard support</li>
                 </ul>
               </CardContent>
             </Card>
             <Card className="border-primary/40 bg-card">
               <CardContent className="p-6">
-                <p className="text-xs font-semibold uppercase text-primary">Growth</p>
-                <p className="mt-2 text-3xl font-bold text-foreground">$X / month</p>
-                <p className="mt-1 text-xs text-muted-foreground">for product teams in production</p>
+                <p className="text-xs font-semibold uppercase text-primary">Pro</p>
+                <p className="mt-2 text-3xl font-bold text-foreground">$99</p>
+                <p className="mt-1 text-xs text-muted-foreground">per seat / month</p>
                 <ul className="mt-4 space-y-1 text-xs text-muted-foreground">
-                  <li>• Unlimited projects</li>
-                  <li>• 1,000 workflow runs / month</li>
-                  <li>• Priority support & SSO</li>
+                  <li>• Advanced filtering + artifacts</li>
+                  <li>• Integrations health + webhooks</li>
+                  <li>• Priority support</li>
                 </ul>
               </CardContent>
             </Card>
@@ -366,11 +498,11 @@ export default function Landing() {
               <CardContent className="p-6">
                 <p className="text-xs font-semibold uppercase text-primary">Enterprise</p>
                 <p className="mt-2 text-3xl font-bold text-foreground">Let’s talk</p>
-                <p className="mt-1 text-xs text-muted-foreground">for org-wide rollout</p>
+                <p className="mt-1 text-xs text-muted-foreground">custom pricing</p>
                 <ul className="mt-4 space-y-1 text-xs text-muted-foreground">
-                  <li>• Custom SLAs and security review</li>
-                  <li>• Dedicated environment and VPC peering</li>
-                  <li>• Implementation support and training</li>
+                  <li>• SSO, RBAC controls, audit needs</li>
+                  <li>• Dedicated environment options</li>
+                  <li>• Custom SLAs and onboarding</li>
                 </ul>
               </CardContent>
             </Card>
@@ -382,18 +514,42 @@ export default function Landing() {
               </Link>
             </Button>
           </div>
+          <p className="mx-auto mt-4 max-w-2xl text-xs text-muted-foreground">
+            Prices shown in USD. Taxes may apply. Seat counts are billed monthly. Contact us for annual and enterprise arrangements.
+          </p>
         </div>
       </section>
 
       <footer className="border-t border-border py-8">
-        <div className="container mx-auto flex flex-col items-center justify-between gap-4 px-4 sm:flex-row">
-          <div className="flex items-center gap-2">
-            <div className="flex h-6 w-6 items-center justify-center rounded bg-primary">
-              <Terminal className="h-3 w-3 text-primary-foreground" />
+        <div className="container mx-auto px-4">
+          <div className="flex flex-col items-start justify-between gap-6 sm:flex-row sm:items-center">
+            <div className="flex items-center gap-2">
+              <div className="flex h-6 w-6 items-center justify-center rounded bg-primary">
+                <Terminal className="h-3 w-3 text-primary-foreground" />
+              </div>
+              <div className="flex flex-col">
+                <span className="text-sm font-semibold">GoAI</span>
+                <span className="text-[11px] text-muted-foreground">GoAI Solutions Private Limited</span>
+              </div>
             </div>
-            <span className="text-sm font-semibold">GoAI</span>
+            <div className="flex flex-wrap gap-x-6 gap-y-2 text-xs text-muted-foreground">
+              <a href="#features" className="hover:text-foreground transition-colors">Features</a>
+              <a href="#pricing" className="hover:text-foreground transition-colors">Pricing</a>
+              <Link to="/login" className="hover:text-foreground transition-colors">Login</Link>
+              <Link to="/register" className="hover:text-foreground transition-colors">Sign up</Link>
+              <a href="/terms" className="hover:text-foreground transition-colors">Terms</a>
+              <a href="/privacy" className="hover:text-foreground transition-colors">Privacy</a>
+              <a href="/security" className="hover:text-foreground transition-colors">Security</a>
+              <a href="/status" className="hover:text-foreground transition-colors">Status</a>
+              <a href="mailto:support@goai.solutions" className="hover:text-foreground transition-colors">Support</a>
+            </div>
           </div>
-          <p className="text-xs text-muted-foreground">© 2026 GoAI. All rights reserved.</p>
+          <div className="mt-6 flex flex-col gap-2 border-t border-border/60 pt-6 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
+            <p>© 2026 GoAI Solutions Private Limited. All rights reserved.</p>
+            <p className="text-[11px]">
+              Product information on this page is representative and may change as the platform evolves.
+            </p>
+          </div>
         </div>
       </footer>
     </div>

@@ -9,7 +9,9 @@ import { Switch } from "@/components/ui/switch";
 import { getProviderLabel } from "@/lib/format";
 import { Play, GitBranch, Ticket } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-import { getProject, startRun } from "@/lib/api";
+import { ApiError } from "@/lib/api/client";
+import { getProject } from "@/lib/api/projects";
+import { startRun } from "@/lib/api/runs";
 
 const RunWorkflow = () => {
   const { projectId } = useParams<{ projectId: string }>();
@@ -65,10 +67,24 @@ const RunWorkflow = () => {
       });
     },
     onSuccess: (data) => {
-      toast({ title: "Run started" });
+      if (data.status === "rejected") {
+        toast({
+          title: "Run rejected by confidence gate",
+          description: "This run was stopped automatically because confidence was below 0.80.",
+        });
+      } else {
+        toast({ title: "Run started" });
+      }
       navigate(`/runs/${encodeURIComponent(data.run_id)}`);
     },
     onError: (err: any) => {
+      if (err instanceof ApiError && err.status === 409) {
+        toast({
+          title: "Run already active",
+          description: "Another run is already active for this project/repository.",
+        });
+        return;
+      }
       toast({ title: "Run failed", description: err?.message });
     },
   });
@@ -104,7 +120,7 @@ const RunWorkflow = () => {
             <CardContent className="flex items-center gap-2 p-3">
               <Ticket className="h-4 w-4 text-primary" />
               <span className="text-xs text-foreground">
-                {getProviderLabel(project.issue_provider)} · {project.issue_project_key_or_team}
+                {getProviderLabel(project.ticket_source_type)} · {project.ticket_source_project_key}
               </span>
             </CardContent>
           </Card>
@@ -119,7 +135,7 @@ const RunWorkflow = () => {
               <Label>Ticket link or ID</Label>
               <Input
                 placeholder={
-                  project.issue_provider === "jira"
+                  project.ticket_source_type === "jira"
                     ? "PAY-123 or https://abc.atlassian.net/browse/PAY-123"
                     : "ANA-12 or Linear issue URL"
                 }
@@ -131,7 +147,7 @@ const RunWorkflow = () => {
             <div className="space-y-2">
               <Label>Branch override (optional)</Label>
               <Input
-                placeholder={project.default_branch}
+                placeholder={project.repo_default_branch}
                 value={branchOverride}
                 onChange={(e) => setBranchOverride(e.target.value)}
                 className="font-mono text-sm"

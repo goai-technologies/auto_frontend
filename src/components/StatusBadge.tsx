@@ -8,7 +8,8 @@ type Status =
   | "failed"
   | "cancelled"
   | "succeeded"
-  | "skipped";
+  | "skipped"
+  | "rejected";
 
 interface StatusBadgeProps {
   status: Status;
@@ -28,6 +29,7 @@ export function StatusBadge({ status, className }: StatusBadgeProps) {
       {status === "success" && <span className="h-1.5 w-1.5 rounded-full bg-current" />}
       {status === "succeeded" && <span className="h-1.5 w-1.5 rounded-full bg-current" />}
       {status === "failed" && <span className="h-1.5 w-1.5 rounded-full bg-current" />}
+      {status === "rejected" && <span className="h-1.5 w-1.5 rounded-full bg-current" />}
       {status}
     </span>
   );

@@ -10,7 +10,8 @@ import { Switch } from "@/components/ui/switch";
 import { getProviderLabel } from "@/lib/format";
 import { Timer, Play, Square } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-import { getProject, getAutoPollRules, upsertAutoPollRule, AutoPollRuleRow } from "@/lib/api";
+import { getProject } from "@/lib/api/projects";
+import { getAutoPollRules, upsertAutoPollRule, type AutoPollRuleRow } from "@/lib/api/autopoll";
 
 const AutoPolling = () => {
   const { projectId } = useParams<{ projectId: string }>();
@@ -35,8 +36,8 @@ const AutoPolling = () => {
   const mutation = useMutation({
     mutationFn: () =>
       upsertAutoPollRule(projectId!, {
-        provider: project?.issue_provider,
-        ...(project?.issue_provider === "jira"
+        provider: project?.ticket_source_type,
+        ...(project?.ticket_source_type === "jira"
           ? { jql }
           : { linear_states: [], linear_assignee: "" }),
         interval_seconds: interval,
@@ -109,7 +110,7 @@ const AutoPolling = () => {
           <CardTitle className="text-base">{existingRule ? "Edit Rule" : "Create Rule"}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {project.issue_provider === "jira" ? (
+          {project.ticket_source_type === "jira" ? (
             <div className="space-y-2">
               <Label>JQL Query</Label>
               <Textarea

@@ -20,7 +20,8 @@ export function getStatusColor(
     | "failed"
     | "cancelled"
     | "succeeded"
-    | "skipped",
+    | "skipped"
+    | "rejected",
 ) {
   switch (status) {
     case "succeeded":
@@ -30,6 +31,7 @@ export function getStatusColor(
     case "running":
       return "bg-info/15 text-info";
     case "failed":
+    case "rejected":
       return "bg-destructive/20 text-destructive";
     case "queued":
     case "skipped":
