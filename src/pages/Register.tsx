@@ -6,6 +6,8 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Terminal } from "lucide-react";
+import { useRegister } from "@/hooks/api/useAuth";
+import { toast } from "@/hooks/use-toast";
 
 export default function Register() {
   const navigate = useNavigate();
@@ -19,9 +21,24 @@ export default function Register() {
   const update = (field: string) => (e: React.ChangeEvent<HTMLInputElement>) =>
     setForm((prev) => ({ ...prev, [field]: e.target.value }));
 
+  const registerMutation = useRegister();
+
   const handleRegister = (e: React.FormEvent) => {
     e.preventDefault();
-    navigate("/onboarding");
+    registerMutation
+      .mutateAsync({
+        name: form.name,
+        org_name: form.orgName,
+        email: form.email,
+        password: form.password,
+      })
+      .then(() => navigate("/onboarding"))
+      .catch((err: any) =>
+        toast({
+          title: "Registration failed",
+          description: err?.message ?? "Please review your details and try again.",
+        }),
+      );
   };
 
   const handleGoogleRegister = () => {
@@ -124,8 +141,8 @@ export default function Register() {
                   minLength={8}
                 />
               </div>
-              <Button type="submit" className="w-full">
-                Create Account
+              <Button type="submit" className="w-full" disabled={registerMutation.isPending}>
+                {registerMutation.isPending ? "Creating account..." : "Create Account"}
               </Button>
             </form>
 

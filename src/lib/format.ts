@@ -1,5 +1,3 @@
-import { RunStatus } from "@/lib/mock-data";
-
 export function formatDate(dateStr: string): string {
   const d = new Date(dateStr);
   return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
@@ -14,15 +12,29 @@ export function formatDateTime(dateStr: string): string {
   return `${formatDate(dateStr)} ${formatTime(dateStr)}`;
 }
 
-export function getStatusColor(status: RunStatus) {
+export function getStatusColor(
+  status:
+    | "queued"
+    | "running"
+    | "success"
+    | "failed"
+    | "cancelled"
+    | "succeeded"
+    | "skipped"
+    | "rejected",
+) {
   switch (status) {
+    case "succeeded":
+      return "bg-success/20 text-success";
     case "success":
-      return "bg-success/15 text-success";
+      return "bg-success/20 text-success";
     case "running":
       return "bg-info/15 text-info";
     case "failed":
-      return "bg-destructive/15 text-destructive";
+    case "rejected":
+      return "bg-destructive/20 text-destructive";
     case "queued":
+    case "skipped":
       return "bg-muted text-muted-foreground";
     case "cancelled":
       return "bg-muted text-muted-foreground";

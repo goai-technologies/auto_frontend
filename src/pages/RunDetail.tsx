@@ -1,96 +1,156 @@
-import { useParams, Link } from "react-router-dom";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Link, useParams } from "react-router-dom";
+import { useMemo, useState } from "react";
+import { ArrowLeft, ExternalLink, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { StatusBadge } from "@/components/StatusBadge";
-import { mockRuns, mockRunEvents } from "@/lib/mock-data";
-import { formatDateTime, formatTime } from "@/lib/format";
-import { ExternalLink, ArrowLeft, RefreshCw } from "lucide-react";
-
-const levelColors: Record<string, string> = {
-  info: "text-info",
-  warn: "text-warning",
-  error: "text-destructive",
-  debug: "text-muted-foreground",
-};
-
-const stepLabels: Record<string, string> = {
-  init: "Init",
-  prd_lite: "PRD Lite",
-  repo_navigator: "Repo Navigator",
-  impl_plan: "Implementation Plan",
-  implementation: "Implementation",
-  ac_check: "AC Check",
-  qa: "QA",
-  pr_creation: "PR Creation",
-};
+import { toast } from "@/hooks/use-toast";
+import { useRunDetail, useRunEvents, useRerunRun, useRerunStep } from "@/hooks/api/useRuns";
+import { PageState } from "@/components/common/PageState";
+import { ConfirmActionDialog } from "@/components/common/ConfirmActionDialog";
+import { RunSummaryCard } from "@/components/runs/RunSummaryCard";
+import { RunStepTimeline } from "@/components/runs/RunStepTimeline";
+import { RunEventsPanel } from "@/components/runs/RunEventsPanel";
+import { RunArtifactsPanel } from "@/components/runs/RunArtifactsPanel";
+import { ArtifactViewer } from "@/components/runs/ArtifactViewer";
+import { useArtifactDetail, useRunArtifacts } from "@/hooks/api/useArtifacts";
 
 const RunDetail = () => {
   const { runId } = useParams<{ runId: string }>();
-  const run = mockRuns.find((r) => r.run_id === runId);
+  const decodedRunId = runId ? decodeURIComponent(runId) : undefined;
+  const runQuery = useRunDetail(decodedRunId);
+  const eventsQuery = useRunEvents(decodedRunId);
+  const rerunMutation = useRerunRun(decodedRunId);
+  const rerunStepMutation = useRerunStep(decodedRunId);
+  const [artifactPage, setArtifactPage] = useState(1);
+  const [selectedArtifactId, setSelectedArtifactId] = useState<string | undefined>();
+  const artifactsQuery = useRunArtifacts(decodedRunId, { page: artifactPage, page_size: 10 });
+  const artifactDetailQuery = useArtifactDetail(decodedRunId, selectedArtifactId);
 
-  if (!run) return <div className="text-muted-foreground">Run not found.</div>;
+  const run = runQuery.data?.run;
+  const events = useMemo(() => eventsQuery.data ?? runQuery.data?.events ?? [], [eventsQuery.data, runQuery.data?.events]);
+
+  const stepCandidates = useMemo(() => {
+    const ids = new Set<string>();
+    const rows: string[] = [];
+    for (const event of events) {
+      const payload = typeof event.payload_json === "object" && event.payload_json !== null ? event.payload_json : {};
+      const stepId = (payload as any).step_id;
+      if (typeof stepId === "string" && !ids.has(stepId)) {
+        ids.add(stepId);
+        rows.push(stepId);
+      }
+    }
+    return rows;
+  }, [events]);
 
   return (
     <div className="flex w-full justify-center">
-      <div className="flex w-full max-w-4xl flex-col gap-6">
+      <div className="flex w-full max-w-6xl flex-col gap-6">
         <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Link to={`/projects/${run.project_id}`}>
-            <Button variant="ghost" size="icon" className="h-8 w-8">
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-          </Link>
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-bold font-mono text-foreground">{run.issue_key}</h1>
-              <StatusBadge status={run.status} />
+          <div className="flex items-center gap-2">
+            <Link to="/activity">
+              <Button variant="ghost" size="icon" className="h-8 w-8">
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+            </Link>
+            <div>
+              <h1 className="text-2xl font-bold font-mono text-foreground">{decodedRunId}</h1>
+              <p className="text-xs text-muted-foreground">Run operational detail view</p>
             </div>
-            <p className="text-sm text-muted-foreground mt-0.5">
-              {run.project_id} · {run.workflow} · {formatDateTime(run.started_at)}
-            </p>
+          </div>
+          <div className="flex gap-2">
+            {run?.pr_url && (
+              <a href={run.pr_url} target="_blank" rel="noopener noreferrer">
+                <Button size="sm">
+                  <ExternalLink className="mr-1 h-4 w-4" /> Open PR
+                </Button>
+              </a>
+            )}
+            <ConfirmActionDialog
+              title="Rerun full run?"
+              triggerLabel="Rerun run"
+              pending={rerunMutation.isPending}
+              onConfirm={() =>
+                rerunMutation
+                  .mutateAsync()
+                  .then((data) => {
+                    toast({ title: "Rerun started" });
+                    window.location.assign(`/runs/${encodeURIComponent(data.run_id)}`);
+                  })
+                  .catch((err: any) => toast({ title: "Rerun failed", description: err?.message }))
+              }
+            />
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                runQuery.refetch();
+                eventsQuery.refetch();
+              }}
+            >
+              <RefreshCw className="mr-1 h-4 w-4" /> Refresh
+            </Button>
           </div>
         </div>
-        <div className="flex gap-2">
-          {run.pr_url && (
-            <a href={run.pr_url} target="_blank" rel="noopener noreferrer">
-              <Button size="sm">
-                <ExternalLink className="h-4 w-4 mr-1" /> Open PR
-              </Button>
-            </a>
-          )}
-          <Button variant="outline" size="sm">
-            <RefreshCw className="h-4 w-4 mr-1" /> Refresh
-          </Button>
-        </div>
-        </div>
 
-        <Card className="bg-card/80 backdrop-blur-sm border-border/60 shadow-sm">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base">Run Logs</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="max-h-[500px] space-y-1 overflow-y-auto rounded-lg border bg-background p-4 font-mono text-xs">
-              {mockRunEvents.map((event, i) => (
-                <div key={i} className="flex gap-3 leading-relaxed">
-                  <span className="shrink-0 text-muted-foreground">
-                    {formatTime(event.timestamp)}
-                  </span>
-                  <span className={`shrink-0 w-12 text-right ${levelColors[event.level]}`}>
-                    [{event.level}]
-                  </span>
-                  <span className="shrink-0 min-w-[120px] text-primary">
-                    {stepLabels[event.step] || event.step}
-                  </span>
-                  <span className="text-foreground">{event.message}</span>
-                </div>
-              ))}
+        <PageState
+          loading={runQuery.isLoading}
+          error={runQuery.isError ? "Failed to load run details." : null}
+          onRetry={() => runQuery.refetch()}
+        >
+          <div className="grid gap-4 lg:grid-cols-3">
+            <div className="space-y-4 lg:col-span-2">
+              {run && <RunSummaryCard run={run} />}
+              <RunStepTimeline events={events} />
+              <RunEventsPanel events={events} />
             </div>
-          </CardContent>
-        </Card>
+            <div className="space-y-3">
+              <div className="rounded-md border border-border/60 p-3">
+                <p className="mb-1 text-xs text-muted-foreground">Ticket Links</p>
+                <a href={run?.original_ticket_url || "#"} className="block text-xs text-primary hover:underline">
+                  Original: {run?.original_ticket_key || "—"}
+                </a>
+                <a href={run?.shadow_ticket_url || "#"} className="block text-xs text-primary hover:underline">
+                  Shadow: {run?.shadow_ticket_key || "—"}
+                </a>
+                {run?.status === "rejected" && (
+                  <p className="mt-2 text-xs text-destructive">
+                    This run was stopped automatically because confidence was below 0.80.
+                  </p>
+                )}
+              </div>
+              {stepCandidates.map((stepId) => (
+                <ConfirmActionDialog
+                  key={stepId}
+                  title={`Rerun step ${stepId}?`}
+                  triggerLabel={`Rerun ${stepId}`}
+                  pending={rerunStepMutation.isPending}
+                  onConfirm={() =>
+                    rerunStepMutation
+                      .mutateAsync({ stepId })
+                      .then((result) => toast({ title: "Step rerun completed", description: `Attempt #${result.attempt_no} ${result.status}` }))
+                      .catch((err: any) => toast({ title: "Step rerun failed", description: err?.message }))
+                  }
+                />
+              ))}
+              <RunArtifactsPanel
+                artifacts={artifactsQuery.data?.items ?? []}
+                page={artifactsQuery.data?.pagination.page ?? artifactPage}
+                totalPages={artifactsQuery.data?.pagination.total_pages ?? 1}
+                onPageChange={setArtifactPage}
+                onSelect={setSelectedArtifactId}
+              />
+              {selectedArtifactId && artifactDetailQuery.data && (
+                <div className="rounded-md border border-border/60 p-3">
+                  <p className="mb-2 text-xs font-medium text-foreground">Artifact detail: {selectedArtifactId}</p>
+                  <ArtifactViewer value={artifactDetailQuery.data.content} />
+                </div>
+              )}
+            </div>
+          </div>
+        </PageState>
       </div>
     </div>
   );
 };
 
 export default RunDetail;
-
