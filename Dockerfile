@@ -11,6 +11,8 @@ RUN npm run build
 FROM nginx:1.27-alpine
 
 COPY nginx/default.conf /etc/nginx/conf.d/default.conf
+COPY nginx/40-env.sh /docker-entrypoint.d/40-env.sh
+RUN chmod +x /docker-entrypoint.d/40-env.sh
 COPY --from=builder /app/dist /usr/share/nginx/html
 
 EXPOSE 80

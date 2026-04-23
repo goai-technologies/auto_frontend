@@ -1,6 +1,7 @@
 import { toast } from "@/hooks/use-toast";
+import { getRuntimeEnv } from "./runtime-config";
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "/api/v1";
+const API_BASE = getRuntimeEnv("VITE_API_BASE_URL") ?? import.meta.env.VITE_API_BASE_URL ?? "/api/v1";
 const TOKEN_KEY = "goai_token";
 
 export function getAuthToken() {
@@ -43,10 +44,13 @@ function isEnvelope<T>(value: unknown): value is Envelope<T> {
 }
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
-  const headers: HeadersInit = {
+  const headers: Record<string, string> = {
     "Content-Type": "application/json",
-    ...(options.headers || {}),
   };
+  const incomingHeaders = new Headers(options.headers);
+  incomingHeaders.forEach((value, key) => {
+    headers[key] = value;
+  });
 
   const token = getAuthToken();
   if (token) {

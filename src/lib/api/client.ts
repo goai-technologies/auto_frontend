@@ -1,7 +1,8 @@
 import { toast } from "@/hooks/use-toast";
 import type { ApiEnvelope, ApiErrorEnvelope, ApiSuccess } from "./types";
+import { getRuntimeEnv } from "../runtime-config";
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "/api/v1";
+const API_BASE = getRuntimeEnv("VITE_API_BASE_URL") ?? import.meta.env.VITE_API_BASE_URL ?? "/api/v1";
 const TOKEN_KEY = "goai_token";
 export const AUTH_TOKEN_EVENT = "goai-auth-token-changed";
 const AUTH_REDIRECT_FLAG = "goai_auth_redirecting";
@@ -62,10 +63,13 @@ function handleUnauthorized(path: string) {
 }
 
 export async function apiRequest<T>(path: string, options: RequestInit = {}): Promise<T> {
-  const headers: HeadersInit = {
+  const headers: Record<string, string> = {
     "Content-Type": "application/json",
-    ...(options.headers || {}),
   };
+  const incomingHeaders = new Headers(options.headers);
+  incomingHeaders.forEach((value, key) => {
+    headers[key] = value;
+  });
   const token = getAuthToken();
   if (token) {
     headers.Authorization = `Bearer ${token}`;

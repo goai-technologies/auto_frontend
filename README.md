@@ -80,6 +80,21 @@ Then open:
 - `http://localhost/landing`
 - `http://localhost/`
 
+### Runtime environment variables in Docker
+
+This image supports runtime config injection through `/env.js` generated on container startup.
+
+Set API base URL at runtime:
+
+```bash
+docker run --rm -p 80:80 \
+  -e VITE_API_BASE_URL="https://api.example.com/api/v1" \
+  --name goai-frontend \
+  goai-frontend
+```
+
+If `VITE_API_BASE_URL` is not provided, it defaults to `/api/v1`.
+
 ## Project Structure (high‑level)
 
 - `src/main.tsx` – React entrypoint.
