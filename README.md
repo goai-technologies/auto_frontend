@@ -66,6 +66,20 @@ Then open the URL printed by Vite (usually `http://localhost:5173` or similar) a
 - `http://localhost:5173/landing` – marketing/landing page
 - `http://localhost:5173/` – dashboard (mock authenticated view)
 
+## Docker (Nginx on port 80)
+
+Build and run the app in Docker with Nginx serving on port `80` (container and host):
+
+```bash
+docker build -t goai-frontend .
+docker run --rm -p 80:80 --name goai-frontend goai-frontend
+```
+
+Then open:
+
+- `http://localhost/landing`
+- `http://localhost/`
+
 ## Project Structure (high‑level)
 
 - `src/main.tsx` – React entrypoint.
