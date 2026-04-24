@@ -57,14 +57,14 @@ export default function Register() {
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary">
               <Terminal className="h-5 w-5 text-primary-foreground" />
             </div>
-            <span className="text-2xl font-bold tracking-tight">GoAI</span>
+            <span className="text-2xl font-bold tracking-tight">PRPilot</span>
           </Link>
         </div>
 
         <Card className="border-border bg-card">
           <CardHeader className="text-center">
             <CardTitle className="text-2xl">Create your account</CardTitle>
-            <CardDescription>Get started with GoAI in under 2 minutes</CardDescription>
+            <CardDescription>Get started with PRPilot in under 2 minutes</CardDescription>
           </CardHeader>
           <CardContent>
             <Button variant="outline" className="w-full" onClick={handleGoogleRegister}>

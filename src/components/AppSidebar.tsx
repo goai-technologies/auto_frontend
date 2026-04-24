@@ -37,7 +37,7 @@ export function AppSidebar() {
             <Terminal className="h-4 w-4 text-primary-foreground" />
           </div>
           <div className="flex flex-col">
-            <span className="text-sm font-semibold text-foreground">GoAI</span>
+            <span className="text-sm font-semibold text-foreground">PRPilot</span>
             <span className="text-[10px] text-muted-foreground">Control Plane</span>
           </div>
         </Link>

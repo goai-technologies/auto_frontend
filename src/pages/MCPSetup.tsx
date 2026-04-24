@@ -17,7 +17,7 @@ const MCPSetup = () => {
 
   const mcpConfig = {
     mcpServers: {
-      [`goai-workflow-${tenantId}`]: {
+      [`prpilot-workflow-${tenantId}`]: {
         command: "python",
         args: ["-m", "goai_mcp.server"],
         cwd: "/not-used-if-you-wrap-with-http",
@@ -42,7 +42,7 @@ const MCPSetup = () => {
         <div>
           <h1 className="text-2xl font-bold text-foreground">MCP / Cursor Setup</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Configure Cursor IDE to use GoAI workflows via MCP
+            Configure Cursor IDE to use PRPilot workflows via MCP
           </p>
         </div>
 
@@ -105,7 +105,7 @@ const MCPSetup = () => {
               <div>
                 <p className="text-sm font-medium text-foreground">Use in chat</p>
                 <p className="text-xs text-muted-foreground">
-                  Example: "Run the Jira to PR workflow for this ticket: PAY-123"
+                  Example: "Run the PRPilot workflow for this ticket: PAY-123"
                 </p>
               </div>
             </div>
