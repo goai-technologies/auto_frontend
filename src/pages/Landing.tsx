@@ -147,7 +147,7 @@ const steps = [
     step: "04",
     title: "Review & Merge",
     description:
-      "GoAI generates a PR with implementation, tests, and QA. Review it and merge.",
+      "PRPilot generates a PR with implementation, tests, and QA. Review it and merge.",
   },
 ];
 
@@ -162,7 +162,7 @@ export default function Landing() {
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
               <Terminal className="h-4 w-4 text-primary-foreground" />
             </div>
-            <span className="text-lg font-bold tracking-tight">GoAI</span>
+            <span className="text-lg font-bold tracking-tight">PRPilot</span>
           </div>
           <div className="hidden items-center gap-8 md:flex">
             <a href="#features" className="text-sm text-muted-foreground transition-colors hover:text-foreground">
@@ -230,7 +230,7 @@ export default function Landing() {
             variants={fadeUp}
             custom={2}
           >
-            GoAI turns Jira or Linear tickets into reviewed pull requests in under{" "}
+            PRPilot turns Jira or Linear tickets into reviewed pull requests in under{" "}
             <span className="font-semibold text-foreground">5 minutes</span> with confidence decisions, shadow ticket
             execution, and rerun controls built for production operations.
           </motion.p>
@@ -308,7 +308,7 @@ export default function Landing() {
               Built for production workflow operations
             </h2>
             <p className="mx-auto mt-4 max-w-2xl text-muted-foreground">
-              From confidence-gated execution to role-protected administration, GoAI v1 turns ticket automation into a
+              From confidence-gated execution to role-protected administration, PRPilot v1 turns ticket automation into a
               reliable control plane for engineering teams.
             </p>
           </div>
@@ -442,7 +442,7 @@ export default function Landing() {
                   )}
                   {s.step === "03" && (
                     <ul className="mt-2 list-disc pl-4 text-xs text-muted-foreground">
-                      <li>One-off mode: paste a ticket; GoAI runs once and opens a PR.</li>
+                      <li>One-off mode: paste a ticket; PRPilot runs once and opens a PR.</li>
                       <li>Auto-poll mode: watch for new tickets that match your filters.</li>
                       <li>Every run emits structured events that you can inspect in the Activity view.</li>
                     </ul>
@@ -450,8 +450,8 @@ export default function Landing() {
                   {s.step === "04" && (
                     <ul className="mt-2 list-disc pl-4 text-xs text-muted-foreground">
                       <li>Review the PRD Lite, plan, and diff directly from your Git provider.</li>
-                      <li>Use the Run detail view to understand exactly what GoAI did and when.</li>
-                      <li>Merge when ready—GoAI never merges for you by default.</li>
+                      <li>Use the Run detail view to understand exactly what PRPilot did and when.</li>
+                      <li>Merge when ready—PRPilot never merges for you by default.</li>
                     </ul>
                   )}
                 </div>
@@ -528,7 +528,7 @@ export default function Landing() {
                 <Terminal className="h-3 w-3 text-primary-foreground" />
               </div>
               <div className="flex flex-col">
-                <span className="text-sm font-semibold">GoAI</span>
+                <span className="text-sm font-semibold">PRPilot</span>
                 <span className="text-[11px] text-muted-foreground">GoAI Solutions Private Limited</span>
               </div>
             </div>

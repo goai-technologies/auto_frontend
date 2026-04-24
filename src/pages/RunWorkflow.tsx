@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,7 +11,12 @@ import { Play, GitBranch, Ticket } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { ApiError } from "@/lib/api/client";
 import { getProject } from "@/lib/api/projects";
-import { startRun } from "@/lib/api/runs";
+import { listRuns, startRun } from "@/lib/api/runs";
+
+function extractIssueKey(input: string): string | undefined {
+  const match = input.match(/([A-Z][A-Z0-9_]+-\d+)/i);
+  return match?.[1]?.toUpperCase();
+}
 
 const RunWorkflow = () => {
   const { projectId } = useParams<{ projectId: string }>();
@@ -19,6 +24,9 @@ const RunWorkflow = () => {
   const [ticketUrl, setTicketUrl] = useState("");
   const [branchOverride, setBranchOverride] = useState("");
   const [dryRun, setDryRun] = useState(false);
+  const [resolvedIssueKey, setResolvedIssueKey] = useState<string | undefined>();
+  const [queuedRun, setQueuedRun] = useState(false);
+  const [queuedAtMs, setQueuedAtMs] = useState<number | undefined>();
 
   const { data: project, isLoading } = useQuery({
     queryKey: ["project", projectId],
@@ -42,24 +50,23 @@ const RunWorkflow = () => {
           const url = new URL(input.startsWith("http") ? input : `https://${input}`);
           const selected = url.searchParams.get("selectedIssue") || undefined;
           if (selected) {
-            issueKey = selected;
+            issueKey = selected.toUpperCase();
           }
           cleanedTicketUrl = url.toString();
         } catch {
           // Fallback: extract after selectedIssue=
-          const match = input.match(/selectedIssue=([A-Z][A-Z0-9_]+-\d+)/i);
-          if (match) {
-            issueKey = match[1];
-          }
+          issueKey = extractIssueKey(input);
         }
       } else if (input.startsWith("http")) {
         // Case 2: direct Jira/Linear issue URL
         cleanedTicketUrl = input;
+        issueKey = extractIssueKey(input);
       } else {
         // Case 3: plain issue key like GOAI-20
-        issueKey = input;
+        issueKey = input.toUpperCase();
       }
 
+      setResolvedIssueKey(issueKey);
       return startRun(projectId!, {
         ticket_url: cleanedTicketUrl,
         issue_key: issueKey,
@@ -67,6 +74,23 @@ const RunWorkflow = () => {
       });
     },
     onSuccess: (data) => {
+      if (data.queued) {
+        toast({
+          title: "Run queued",
+          description: "Another run is active. We will start this run as soon as the lock is available.",
+        });
+        setQueuedRun(true);
+        setQueuedAtMs(Date.now());
+        return;
+      }
+      if (!data.run_id && !data.queued) {
+        toast({
+          title: "Unable to start run",
+          description: "Backend did not return a run id.",
+        });
+        setQueuedRun(false);
+        return;
+      }
       if (data.status === "rejected") {
         toast({
           title: "Run rejected by confidence gate",
@@ -75,9 +99,13 @@ const RunWorkflow = () => {
       } else {
         toast({ title: "Run started" });
       }
-      navigate(`/runs/${encodeURIComponent(data.run_id)}`);
+      if (data.run_id) {
+        setQueuedRun(false);
+        setQueuedAtMs(undefined);
+        navigate(`/runs/${encodeURIComponent(data.run_id)}`);
+      }
     },
-    onError: (err: any) => {
+    onError: (err: unknown) => {
       if (err instanceof ApiError && err.status === 409) {
         toast({
           title: "Run already active",
@@ -85,9 +113,55 @@ const RunWorkflow = () => {
         });
         return;
       }
-      toast({ title: "Run failed", description: err?.message });
+      if (err instanceof ApiError && err.status === 403) {
+        toast({ title: "Insufficient permissions", description: "You are not allowed to trigger runs for this project." });
+        return;
+      }
+      toast({ title: "Run failed", description: err instanceof Error ? err.message : "Unknown error" });
     },
   });
+
+  const queuedRunsQuery = useQuery({
+    queryKey: ["runs", "queued-check", projectId, resolvedIssueKey, queuedAtMs],
+    queryFn: () =>
+      listRuns({
+        project_id: projectId,
+        page: 1,
+        page_size: 10,
+        q: resolvedIssueKey,
+        sort_by: "created_at",
+        sort_order: "desc",
+      }),
+    enabled: !!projectId && queuedRun,
+    refetchInterval: 3000,
+  });
+
+  const matchedRunId = useMemo(() => {
+    const items = queuedRunsQuery.data?.items ?? [];
+    if (!items.length || !resolvedIssueKey) return undefined;
+
+    const lowerIssueKey = resolvedIssueKey.toLowerCase();
+    const triggerWindowStart = queuedAtMs ? queuedAtMs - 5000 : undefined;
+    const exact = items.find((r) => {
+      const original = r.original_ticket_key?.toLowerCase?.() ?? "";
+      const shadow = r.shadow_ticket_key?.toLowerCase?.() ?? "";
+      const createdAtMs = Date.parse(r.created_at);
+      const afterQueuedAt = triggerWindowStart ? createdAtMs >= triggerWindowStart : true;
+      return afterQueuedAt && (original === lowerIssueKey || shadow === lowerIssueKey);
+    });
+    if (exact?.id) {
+      return exact.id;
+    }
+    return undefined;
+  }, [queuedRunsQuery.data?.items, resolvedIssueKey, queuedAtMs]);
+
+  useEffect(() => {
+    if (!queuedRun || !matchedRunId) return;
+    setQueuedRun(false);
+    setQueuedAtMs(undefined);
+    toast({ title: "Run started from queue", description: "Opening run detail..." });
+    navigate(`/runs/${encodeURIComponent(matchedRunId)}`);
+  }, [queuedRun, matchedRunId, navigate]);
 
   if (isLoading || !project) return <div className="text-muted-foreground">Project not found.</div>;
 
@@ -105,6 +179,11 @@ const RunWorkflow = () => {
         <div>
           <h1 className="text-2xl font-bold text-foreground">Run Workflow</h1>
           <p className="mt-1 text-sm text-muted-foreground">{project.name}</p>
+          {queuedRun && (
+            <p className="mt-1 text-xs text-amber-600">
+              Run is queued. Waiting for active lock to clear and polling recent runs...
+            </p>
+          )}
         </div>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">

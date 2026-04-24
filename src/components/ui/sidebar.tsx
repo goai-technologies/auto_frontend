@@ -68,7 +68,7 @@ export const SidebarFooter = React.forwardRef<HTMLDivElement, React.HTMLAttribut
 
 export const SidebarContent = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
   function SidebarContent({ className, ...props }, ref) {
-    return <div ref={ref} className={cn("flex-1 px-2 py-2 space-y-2", className)} {...props} />;
+    return <div ref={ref} className={cn("flex-1 overflow-y-auto px-2 py-2 space-y-2", className)} {...props} />;
   },
 );
 

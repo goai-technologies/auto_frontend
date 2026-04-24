@@ -28,6 +28,23 @@ export interface RunsListResponse {
   pagination: PaginationMeta;
 }
 
+export interface RunProgressPhase {
+  key: string;
+  label: string;
+  status: "pending" | "in_progress" | "completed" | "failed";
+}
+
+export interface RunProgressResponse {
+  total_steps: number;
+  completed_steps: number;
+  active_step: { key: string; label: string } | null;
+  phases: RunProgressPhase[];
+  run_status: RunStatusApi;
+  is_terminal: boolean;
+  recommended_poll_interval_ms: number;
+  last_event_at?: string;
+}
+
 export function listRuns(params: RunsListParams = {}) {
   const search = new URLSearchParams();
   if (params.status) search.set("status", params.status);
@@ -53,6 +70,10 @@ export function listRunEvents(runId: string) {
   return apiRequest<RunEvent[]>(`/runs/${encodeURIComponent(runId)}/events`);
 }
 
+export function getRunProgress(runId: string) {
+  return apiRequest<RunProgressResponse>(`/runs/${encodeURIComponent(runId)}/progress`);
+}
+
 export function startRun(
   projectId: string,
   body: {
@@ -63,7 +84,13 @@ export function startRun(
     initiated_by_id?: string;
   },
 ) {
-  return apiRequest<{ run_id: string; status: RunStatusApi }>(`/projects/${encodeURIComponent(projectId)}/runs`, {
+  return apiRequest<{
+    run_id?: string;
+    status?: RunStatusApi;
+    queued?: boolean;
+    rejected?: boolean;
+    message?: string;
+  }>(`/projects/${encodeURIComponent(projectId)}/runs`, {
     method: "POST",
     body: JSON.stringify(body),
   });
@@ -83,6 +110,7 @@ export interface StepRerunResponse {
   step_id: string;
   attempt_no: number;
   status: RunStatusApi;
+  continued_steps?: string[];
 }
 
 export function rerunStep(runId: string, stepId: string) {

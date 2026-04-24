@@ -1,5 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { connectGithub, connectJira, connectLinear, listIntegrations, type IntegrationsListParams } from "@/lib/api/integrations";
+import {
+  connectIntegration,
+  listIntegrationProviders,
+  listIntegrations,
+  type ConnectIntegrationPayload,
+  type IntegrationsListParams,
+} from "@/lib/api/integrations";
 import { queryKeys } from "@/lib/queryKeys";
 
 export function useIntegrations(params: IntegrationsListParams = {}) {
@@ -9,20 +15,17 @@ export function useIntegrations(params: IntegrationsListParams = {}) {
   });
 }
 
+export function useIntegrationProviders() {
+  return useQuery({
+    queryKey: queryKeys.integrations.providers,
+    queryFn: listIntegrationProviders,
+  });
+}
+
 export function useCreateIntegration() {
   const queryClient = useQueryClient();
-  return {
-    github: useMutation({
-      mutationFn: connectGithub,
-      onSuccess: () => queryClient.invalidateQueries({ queryKey: ["integrations"] }),
-    }),
-    jira: useMutation({
-      mutationFn: connectJira,
-      onSuccess: () => queryClient.invalidateQueries({ queryKey: ["integrations"] }),
-    }),
-    linear: useMutation({
-      mutationFn: connectLinear,
-      onSuccess: () => queryClient.invalidateQueries({ queryKey: ["integrations"] }),
-    }),
-  };
+  return useMutation({
+    mutationFn: (payload: ConnectIntegrationPayload) => connectIntegration(payload),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["integrations"] }),
+  });
 }

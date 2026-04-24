@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   getRun,
+  getRunProgress,
   listRunEvents,
   listRuns,
   rerunRun,
@@ -17,19 +18,35 @@ export function useRuns(params: RunsListParams) {
   });
 }
 
-export function useRunDetail(runId?: string) {
+export function useRunDetail(runId?: string, options?: { refetchIntervalMs?: number }) {
   return useQuery({
     queryKey: queryKeys.runs.detail(runId),
     queryFn: () => getRun(runId!),
     enabled: !!runId,
+    refetchInterval: options?.refetchIntervalMs ?? false,
   });
 }
 
-export function useRunEvents(runId?: string) {
+export function useRunEvents(runId?: string, options?: { refetchIntervalMs?: number }) {
   return useQuery({
     queryKey: queryKeys.runs.events(runId),
     queryFn: () => listRunEvents(runId!),
     enabled: !!runId,
+    refetchInterval: options?.refetchIntervalMs ?? false,
+  });
+}
+
+export function useRunProgress(runId?: string) {
+  return useQuery({
+    queryKey: queryKeys.runs.progress(runId),
+    queryFn: () => getRunProgress(runId!),
+    enabled: !!runId,
+    refetchInterval: (query) => {
+      const data = query.state.data;
+      if (!data) return 2000;
+      if (data.is_terminal) return 15000;
+      return data.recommended_poll_interval_ms ?? 2000;
+    },
   });
 }
 
@@ -60,6 +77,7 @@ export function useRerunStep(runId?: string) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.runs.detail(runId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.runs.events(runId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.runs.progress(runId) });
     },
   });
 }

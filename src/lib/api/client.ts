@@ -36,10 +36,20 @@ function isEnvelope<T>(value: unknown): value is ApiEnvelope<T> {
 }
 
 function getErrorMessage(raw: any, status: number) {
+  const fallbackByStatus: Record<number, string> = {
+    400: "Invalid request payload.",
+    401: "Session expired. Please sign in again.",
+    403: "Insufficient permissions for this action.",
+    404: "Requested resource was not found.",
+    409: "Request conflicts with current resource state.",
+    410: "Requested API route is deprecated.",
+    500: "Server error. Please try again.",
+  };
   return (
     raw?.error?.message ||
     (typeof raw?.message === "string" ? raw.message : undefined) ||
     (typeof raw?.detail === "string" ? raw.detail : undefined) ||
+    fallbackByStatus[status] ||
     `Request failed with status ${status}`
   );
 }

@@ -210,38 +210,34 @@ export function getDashboardSummary() {
 export interface IntegrationRow {
   id: string;
   tenant_id: string;
-  provider: "github" | "jira" | "linear";
+  provider: string;
   status: "connected" | "error" | "disconnected";
   connected_at?: string;
   last_error?: string;
   metadata_json?: string;
 }
 
+export interface IntegrationProvidersRow {
+  providers: string[];
+}
+
+export interface ConnectIntegrationBody {
+  provider: string;
+  name?: string;
+  config?: Record<string, unknown>;
+  secrets?: Record<string, unknown>;
+}
+
 export function listIntegrations() {
   return request<IntegrationRow[]>("/integrations");
 }
 
-export function connectGithub(body: { installation_id: string; org: string }) {
-  return request<IntegrationRow>("/integrations/github/connect", {
-    method: "POST",
-    body: JSON.stringify(body),
-  });
+export function listIntegrationProviders() {
+  return request<IntegrationProvidersRow>("/integrations/providers");
 }
 
-export function connectJira(body: {
-  base_url: string;
-  email_or_user: string;
-  api_token: string;
-  project_keys: string[];
-}) {
-  return request<IntegrationRow>("/integrations/jira/connect", {
-    method: "POST",
-    body: JSON.stringify(body),
-  });
-}
-
-export function connectLinear(body: { api_key: string }) {
-  return request<IntegrationRow>("/integrations/linear/connect", {
+export function connectIntegration(body: ConnectIntegrationBody) {
+  return request<IntegrationRow>("/integrations/connect", {
     method: "POST",
     body: JSON.stringify(body),
   });

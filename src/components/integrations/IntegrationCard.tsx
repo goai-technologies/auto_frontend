@@ -26,6 +26,14 @@ function inferCredentialsState(integration: IntegrationItem): {
   return { label: "Unknown", configured: "unknown" };
 }
 
+function getProviderLabel(provider: string) {
+  return provider
+    .split(/[_-]/g)
+    .filter(Boolean)
+    .map((part) => part[0].toUpperCase() + part.slice(1))
+    .join(" ");
+}
+
 export function IntegrationCard({
   integration,
   onConfigure,
@@ -40,7 +48,7 @@ export function IntegrationCard({
   return (
     <Card className="bg-card/80 border-border/60">
       <CardHeader className="pb-2">
-        <CardTitle className="text-base capitalize">{integration.provider}</CardTitle>
+        <CardTitle className="text-base">{getProviderLabel(String(integration.provider))}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-2 text-sm">
         <div className="flex items-center justify-between">

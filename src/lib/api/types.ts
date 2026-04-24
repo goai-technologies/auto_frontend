@@ -39,7 +39,14 @@ export function getItems<T>(data: T[] | { items: T[] }): T[] {
   return Array.isArray(data) ? data : data.items;
 }
 
-export type RunStatusApi = "queued" | "running" | "succeeded" | "failed" | "skipped" | "rejected";
+export type RunStatusApi =
+  | "queued"
+  | "running"
+  | "succeeded"
+  | "failed"
+  | "skipped"
+  | "rejected"
+  | "needs_manual_action";
 export type Role = "admin" | "operator";
 
 export interface AuthUser {
@@ -141,7 +148,6 @@ export interface IntegrationItem {
   /** When omitted, treat as unknown and infer from masked hint / connection signals in UI. */
   has_credentials?: boolean;
   masked_credentials_hint?: string;
-  credentials_encrypted?: string;
 }
 
 export interface RunArtifactItem {

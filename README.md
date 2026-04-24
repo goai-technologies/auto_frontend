@@ -1,6 +1,6 @@
-# GoAI Workflows – Frontend Control Plane
+# PRPilot – Frontend Control Plane
 
-This is the React frontend for **GoAI Workflows** – a control plane for turning Jira / Linear tickets into production‑ready GitHub pull requests in minutes. It provides a tenant dashboard, integrations setup, project configuration, workflow runs, auto‑polling, and MCP (Cursor) setup screens.
+This is the React frontend for **PRPilot** – a control plane for turning Jira / Linear tickets into production‑ready GitHub pull requests in minutes. It provides a tenant dashboard, integrations setup, project configuration, workflow runs, auto‑polling, and MCP (Cursor) setup screens.
 
 The app now targets a live backend API for auth, dashboard, runs, projects, integrations, and onboarding.
 
@@ -18,7 +18,7 @@ The app now targets a live backend API for auth, dashboard, runs, projects, inte
 ## Key Screens
 
 - **Landing (`/landing`)**
-  - Marketing page explaining GoAI, with hero log showing an example ticket → PR workflow and under‑5‑minute timings.
+  - Marketing page explaining PRPilot, with hero log showing an example ticket → PR workflow and under‑5‑minute timings.
   - Sections for **Features**, **How It Works**, and **Pricing**, plus CTA buttons to login/register.
   - Theme toggle (light/dark) in the navbar.
 
@@ -33,7 +33,7 @@ The app now targets a live backend API for auth, dashboard, runs, projects, inte
     - Integration status cards (GitHub, Jira, Linear).
     - Summary stats (projects, successful runs, active runs).
     - Recent runs table with status badges and PR links.
-  - `/integrations` – Configure GitHub / Jira / Linear with masked secret UX and webhook subscription setup.
+  - `/integrations` – Configure GitHub / Jira / Linear through generic backend connect API, with provider discovery, masked secret UX, and webhook subscription setup.
   - `/projects` – List of projects with repo + ticket‑source mappings and actions to view, run workflows, and configure auto‑polling.
   - `/projects/:projectId` – Project detail, repo + issue‑source panels, and recent runs for that project.
   - `/projects/:projectId/run` – One‑off **Run Workflow** screen (paste ticket link/ID, optional branch override, dry‑run toggle).
@@ -41,9 +41,9 @@ The app now targets a live backend API for auth, dashboard, runs, projects, inte
   - `/activity` – Runs operations table with filtering/search/sorting/pagination (URL-synced).
   - `/runs/:runId` – Run detail with confidence, ticket links, events, step reruns, and artifacts list/detail.
   - `/users` – Admin-only user management (list/create/update).
-  - `/mcp` – Instructions and JSON snippet for configuring GoAI as a Cursor MCP server.
+  - `/mcp` – Instructions and JSON snippet for configuring PRPilot as a Cursor MCP server.
 
-All app pages share a responsive sidebar layout with a **GoAI Control Plane** navigation and a **sun/moon theme toggle** in the top header.
+All app pages share a responsive sidebar layout with a **PRPilot Control Plane** navigation and a **sun/moon theme toggle** in the top header.
 
 ## Theming
 
@@ -91,8 +91,15 @@ If omitted, the frontend defaults to `/api/v1`.
 ## Backend Hardening Notes
 
 - List endpoints consume `{ data: { items, pagination } }`.
-- Integration secrets are never displayed; UI uses `has_credentials` and `masked_credentials_hint`.
+- Integrations use `GET /integrations/providers` for provider discovery and `POST /integrations/connect` for credential saves.
+- Integration secrets are never displayed; UI sends provider-specific values under `secrets` and uses `has_credentials` + `masked_credentials_hint` for status.
 - 401 on protected APIs clears session and redirects to login.
 - 403 on admin endpoints is surfaced as permission messaging in-page.
 - Webhook subscription create requires a `secret`.
+- Run trigger supports queue responses; UI avoids `/runs/undefined` by polling recent runs when `queued=true`.
+
+## Local Dev / CORS
+
+- Expected frontend origins: `http://localhost:5173`, `http://localhost:5174`.
+- API requests use bearer token `Authorization` headers consistently for preflighted calls.
 
