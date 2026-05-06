@@ -43,7 +43,7 @@ const Dashboard = () => {
               </div>
             </CardHeader>
             <CardContent>
-              {data?.recent_runs?.length ? <RecentRunsTable runs={data.recent_runs} /> : <EmptyState message="No runs yet." />}
+              {data?.recent_runs?.length ? <RecentRunsTable runs={data.recent_runs.slice(0, 5)} /> : <EmptyState message="No runs yet." />}
             </CardContent>
           </Card>
 
